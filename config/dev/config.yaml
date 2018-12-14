@@ -1,0 +1,247 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+
+    This template deploys a VPC, with a pair of public, 2 private for ECS and 2 private DB subnets 
+    spread across two Availabilty Zones. It deploys an Internet Gateway, with a default 
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    and default routes for them in the private subnets.
+
+    It then deploys a highly available ECS cluster using an AutoScaling Group, with 
+    ECS hosts distributed across multiple Availability Zones. 
+
+    It creates an AWS RDS PostgresSQL DB over two Avalability Zones.
+
+    Finally, it deploys a pair of example ECS services from containers published in 
+    Amazon EC2 Container Registry (Amazon ECR).
+
+    Last Modified: 21nd November 2018
+    Author: Paul Maddox <pmaddox@amazon.com>, Jan Norback TechTestApp
+
+#Input Parameters to collect upon start
+Metadata:
+  AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: 'RDS Parameters'
+          Parameters:
+           - DBNameParam
+           - DBMasterUsernameParam
+           - DBMasterUserPasswordParam
+           - DBPortParam
+        - Label:
+            default: Environment            
+          Parameters:
+           #EC2keypairParam only to be used for testing
+           - EC2keypairParam
+           - EnvTypeParam
+
+Parameters:
+    DBNameParam:
+        Description: 'Name of the database.'
+        Type: String
+        MinLength: "1"
+        MaxLength: "8"
+        AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+        ConstraintDescription: "Must begin with a letter and contain only alphanumeric characters."
+        Default: 'app'
+
+    EC2keypairParam:
+        Description: Provides the name of the EC2 key pair
+        Type: String
+        Default: me-sydney-keypair
+    
+    EnvTypeParam: 
+        Description: Environment type, specify prod or test.
+        Default: prod
+        Type: String
+        AllowedValues: 
+         - prod
+         - test
+        ConstraintDescription: must specify prod or test.
+
+    DBMasterUsernameParam:
+        Description: 'The master user name for the DB instance.'
+        Type: String
+        Default: postgres
+
+    DBPortParam:
+        Description: Port to connect to the database server on
+        Type: String
+        Default: 5432
+
+    DBMasterUserPasswordParam:
+        Description: 'The master password for the DB instance.'
+        Type: String
+        MinLength: "8"
+        MaxLength: "10"
+        AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+        ConstraintDescription: "Must begin with a letter and contain only alphanumeric characters."
+        NoEcho: true
+        Default: 'changeme'
+ 
+ #End Input Parameters to collect upon start
+Conditions:
+  CreateProdResources: !Equals [!Ref EnvTypeParam, prod]
+  CreateTestResources: !Equals [!Ref EnvTypeParam, test]
+  #If test then we allow debugging
+
+
+Resources:
+
+    VPC:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/infrastructure/vpc.yaml
+            Parameters:
+                EnvironmentName:    !Ref AWS::StackName
+                #Subnet CIDRs could be adjusted here if needed
+                VpcCIDR:            10.192.0.0/16
+                #Public is for loadbalancer and potential Bastion Host
+                PublicSubnet1CIDR:  10.192.10.0/24
+                PublicSubnet2CIDR:  10.192.11.0/24
+                #Private is for ECS/EC2 instances
+                PrivateSubnet1CIDR: 10.192.20.0/24
+                PrivateSubnet2CIDR: 10.192.21.0/24
+                #The DB private subnet is completely separated
+                DBPrivSubnet1CIDR:  10.192.30.0/24
+                DBPrivSubnet2CIDR:  10.192.31.0/24
+
+    SecurityGroups:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/infrastructure/security-groups.yaml
+            Parameters: 
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+
+    ALB:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/infrastructure/load-balancers.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+                Subnets: !GetAtt VPC.Outputs.PublicSubnets
+                #SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                SecurityGroup: !If [CreateProdResources, !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup, !GetAtt SecurityGroups.Outputs.TestingSecurityGroup] 
+
+    MyDB:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/db/postgresdb.yaml
+            Parameters:
+                #For test setup put the ECS in the Public subnet and the special public security group
+                #
+                DatabaseSecurityGroup: !If [CreateProdResources, !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup, !GetAtt SecurityGroups.Outputs.TestingSecurityGroup] 
+                #SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+                MyDBSubnets: !If [CreateProdResources, !GetAtt VPC.Outputs.DBPrivateSubnets, !GetAtt VPC.Outputs.PublicSubnets]
+                #
+                #DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
+                DBInstanceClass: db.t2.micro
+                #MyDBSubnets: !GetAtt VPC.Outputs.DBPrivSubnets
+                EnvironmentName: !Ref AWS::StackName
+                DBMasterUsername: !Ref DBMasterUsernameParam
+                DBMasterUserPassword: !Ref DBMasterUserPasswordParam
+                DBPort: !Ref DBPortParam
+
+    EC2DBInit:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/infrastructure/ec2-instance-dbinit.yaml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                InstanceType: t2.micro
+                VPC: !GetAtt VPC.Outputs.VPC
+                EnvType: !Ref EnvTypeParam
+                #
+                #For test setup put the EC2 in the Public subnet and the special public security group
+                #
+                SecurityGroup: !If [CreateProdResources, !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup, !GetAtt SecurityGroups.Outputs.TestingSecurityGroup] 
+                EC2SubnetId: !If [CreateProdResources, !GetAtt VPC.Outputs.PrivateSubnet1, !GetAtt VPC.Outputs.PublicSubnet1]  
+                #Subnets: !If [CreateProdResources, !GetAtt VPC.Outputs.PrivateSubnets, !GetAtt VPC.Outputs.PublicSubnets]
+                #
+                #Added test temporary as an alternative to work on ECS without the DB
+                #DBHost: !GetAtt MyDB.Outputs.VTTDBHOST
+                #ListenHost: !GetAtt MyDB.Outputs.VTTLISTENHOST
+                #ListenPort: !GetAtt MyDB.Outputs.VTTLISTENPORT
+                DBHost: !GetAtt MyDB.Outputs.VTTDBHOST
+                ListenHost: !GetAtt MyDB.Outputs.VTTLISTENHOST
+                ListenPort: !GetAtt MyDB.Outputs.VTTLISTENPORT                
+
+                DBMasterUsername: !Ref DBMasterUsernameParam
+                DBMasterUserPassword: !Ref DBMasterUserPasswordParam
+                DBPort: !Ref DBPortParam
+                DBName: !Ref DBNameParam
+                EC2keypair: !Ref EC2keypairParam
+
+#    ECS:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/infrastructure/ecs-cluster.yaml
+#            Parameters:
+#                EnvironmentName: !Ref AWS::StackName
+#                InstanceType: t2.micro
+#                ClusterSize: 4
+#                VPC: !GetAtt VPC.Outputs.VPC
+#                EnvType: !Ref EnvTypeParam
+#                #
+#                #For test setup put the ECS in the Public subnet and the special public security group
+#                #
+#                SecurityGroup: !If [CreateProdResources, !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup, !GetAtt SecurityGroups.Outputs.TestingSecurityGroup] 
+#                Subnets: !If [CreateProdResources, !GetAtt VPC.Outputs.PrivateSubnets, !GetAtt VPC.Outputs.PublicSubnets]
+#                #
+#                #Added test temporary as an alternative to work on ECS without the DB
+#                #DBHost: !GetAtt MyDB.Outputs.VTTDBHOST
+#                #ListenHost: !GetAtt MyDB.Outputs.VTTLISTENHOST
+#                #ListenPort: !GetAtt MyDB.Outputs.VTTLISTENPORT
+#                DBHost: localhost
+#                ListenHost: localhost
+#                ListenPort: 3000                
+#
+#                DBMasterUsername: !Ref DBMasterUsernameParam
+#                DBMasterUserPassword: !Ref DBMasterUserPasswordParam
+#                DBPort: !Ref DBPortParam
+#                DBName: !Ref DBNameParam
+#                EC2keypair: !Ref EC2keypairParam
+
+#    ProductService:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/services/product-service/service.yaml
+#            Parameters:
+#                VPC: !GetAtt VPC.Outputs.VPC
+#                Cluster: !GetAtt ECS.Outputs.Cluster
+#                DesiredCount: 2
+#                Listener: !GetAtt ALB.Outputs.Listener 
+#                Path: /products
+#
+#    WebsiteService:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/services/website-service/service.yaml
+#            Parameters:
+#                VPC: !GetAtt VPC.Outputs.VPC
+#                Cluster: !GetAtt ECS.Outputs.Cluster
+#                DesiredCount: 2
+#                ProductServiceUrl: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
+#                Listener: !GetAtt ALB.Outputs.Listener 
+#                Path: /
+#                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
+#
+#    LifecycleHook:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: https://s3.amazonaws.com/jnorback-open1/ecs-refarch-cloudformation/infrastructure/lifecyclehook.yaml
+#            Parameters:
+#                Cluster: !GetAtt ECS.Outputs.Cluster
+#                ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
+#
+#Outputs:
+#
+#    ProductServiceUrl: 
+#        Description: The URL endpoint for the product service
+#        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
+#
+#    WebsiteServiceUrl: 
+#        Description: The URL endpoint for the website service
+#        Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]

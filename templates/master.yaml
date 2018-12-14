@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+
+    This template deploys a VPC, with a pair of public, 2 private for ECS and 2 private DB subnets 
+    spread across two Availabilty Zones. It deploys an Internet Gateway, with a default 
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    and default routes for them in the private subnets.
+
+    It then deploys a highly available ECS cluster using an AutoScaling Group, with 
+    ECS hosts distributed across multiple Availability Zones. 
+
+    It creates an AWS RDS PostgresSQL DB over two Avalability Zones. It initiates the DB.
+
+    Finally, it deploys a pair of example ECS services from containers published in 
+    Amazon EC2 Container Registry (Amazon ECR). 
+
+    Last Modified: 15 December 2018
+    Author: Jan Norback TechTestApp
+
+Metadata:
+  AWS::CloudFormation::Interface:
+      ParameterGroups:
+        - Label:
+            default: 'RDS Parameters'
+          Parameters:
+           - DBNameParam
+           - DBMasterUsernameParam
+           - DBMasterUserPasswordParam
+           - DBPortParam
+        - Label:
+            default: Environment            
+          Parameters:
+           #EC2keypairParam only to be used for testing
+           - EC2keypairParam
+           - EnvTypeParam
+
+Parameters:
+    DBNameParam:
+        Description: 'Name of the database.'
+        Type: String
+        MinLength: "1"
+        MaxLength: "8"
+        AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+        ConstraintDescription: "Must begin with a letter and contain only alphanumeric characters."
+        Default: 'app'
+
+    EC2keypairParam:
+        Description: Provides the name of the EC2 key pair
+        Type: String
+        Default: me-sydney-keypair
+    
+    EnvTypeParam: 
+        Description: Environment type, specify prod or test.
+        Default: prod
+        Type: String
+        AllowedValues: 
+         - prod
+         - test
+        ConstraintDescription: must specify prod or test.
+
+    DBMasterUsernameParam:
+        Description: 'The master user name for the DB instance.'
+        Type: String
+        Default: postgres
+
+    DBPortParam:
+        Description: Port to connect to the database server on
+        Type: String
+        Default: 5432
+
+    DBMasterUserPasswordParam:
+        Description: 'The master password for the DB instance.'
+        Type: String
+        MinLength: "8"
+        MaxLength: "10"
+        AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+        ConstraintDescription: "Must begin with a letter and contain only alphanumeric characters."
+        NoEcho: true
+        Default: 'changeme'
+ 
+ #End Input Parameters to collect upon start
+Conditions:
+  CreateProdResources: !Equals [!Ref EnvTypeParam, prod]
+  CreateTestResources: !Equals [!Ref EnvTypeParam, test]
+  #If test then we allow debugging
+
