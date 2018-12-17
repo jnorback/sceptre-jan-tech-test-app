@@ -1,6 +1,5 @@
 template_path: infrastructure/t_vpc.yaml
-
-Parameters:
+parameters:
    #Subnet CIDRs could be adjusted here if needed
    VpcCIDR:            10.192.0.0/16
    #Public is for loadbalancer and potential Bastion Host

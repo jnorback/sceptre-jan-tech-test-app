@@ -317,3 +317,6 @@ Outputs:
         Description: A reference to the NAT Elastic IP address in the 1st Availability Zone
         Value: !Ref NatGateway2EIP
 
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Value: !Ref EnvironmentName

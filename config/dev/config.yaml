@@ -1,22 +1,4 @@
 region: ap-southeast-2
 template_bucket_name: jnorback-open1
-template_key_prefix: sceptre/sceptre-jan-tech-test-app/dev
-parameters:
-   EnvironmentName: "TechTestDev"
-   #Subnet CIDRs could be adjusted here if needed
-#   VpcCIDR:            10.192.0.0/16
-   #Public is for loadbalancer and potential Bastion Host
-#   PublicSubnet1CIDR:  10.192.10.0/24
-#   PublicSubnet2CIDR:  10.192.11.0/24
-   #Private is for ECS/EC2 instances
-#   PrivateSubnet1CIDR: 10.192.20.0/24
-#   PrivateSubnet2CIDR: 10.192.21.0/24
-   #The DB private subnet is completely separated
-#   DBPrivSubnet1CIDR:  10.192.30.0/24
-#   DBPrivSubnet2CIDR:  10.192.31.0/24
-#  DBNameParam: "techtest"
-#  DBMasterUsernameParam: "postgres"
-#  DBMasterUserPasswordParam: "jpassword"
-#  DBPortParam: "5432"
-#  EnvTypeParam: "test"
-#  EC2keypairParam: "me-sydney-keypair"
+template_key_prefix: sceptre/sceptre-jan-tech-test-app
+

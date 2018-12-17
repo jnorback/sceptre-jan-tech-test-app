@@ -1,8 +1,8 @@
 region: ap-southeast-2
 template_bucket_name: jnorback-open1
-template_key_prefix: sceptre/sceptre-jan-tech-test-app/prod
+template_key_prefix: sceptre/sceptre-jan-tech-test-app
 parameters:
-   EnvironmentName: "TechTestProd"
+    EnvironmentName: "TechTestProd"
 #  DBNameParam: "techtest"
 #  DBMasterUsernameParam: "postgres"
 #  DBMasterUserPasswordParam: "jpassword"
