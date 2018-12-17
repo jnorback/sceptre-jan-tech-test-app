@@ -1,0 +1,3 @@
+template_path: infrastructure/t_security-groups.yaml
+parameters: 
+   VPC: !stack_output vpc::VPC
