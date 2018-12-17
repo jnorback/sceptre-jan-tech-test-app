@@ -1,3 +1,5 @@
 template_path: infrastructure/t_security-groups.yaml
+dependencies:
+  - dev/vpc.yaml
 parameters: 
-   VPC: !stack_output vpc::VPC
+   VPC: !stack_output vpc.yaml::VPC
