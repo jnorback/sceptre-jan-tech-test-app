@@ -1,0 +1,12 @@
+template_path: infrastructure/t_load-balancers.yaml
+dependencies:
+  - dev/vpc.yaml
+  - dev/security-groups.yaml
+parameters: 
+   VPC: !stack_output vpc.yaml::VPC
+   EnvironmentName: !stack_output vpc.yaml::EnvironmentName
+   Subnets: !stack_output vpc.yaml::PublicSubnets
+   #DEV
+   SecurityGroup: !stack_output security-groups.yaml::TestingSecurityGroup
+   #Prod
+   #SecurityGroup: !stack_output security-groups.yaml::LoadBalancerSecurityGroup
