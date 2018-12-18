@@ -4,7 +4,7 @@ dependencies:
   - dev/security-groups.yaml
 parameters: 
    VPC: !stack_output vpc.yaml::VPC
-   EnvironmentName: !stack_output vpc.yaml::EnvironmentName
+   EnvironmentName: {{ var.EnvironmentName }}
    Subnets: !stack_output vpc.yaml::PublicSubnets
    #DEV
    SecurityGroup: !stack_output security-groups.yaml::TestingSecurityGroup

@@ -1,0 +1,15 @@
+#This has the global variables for the development (dev) environment
+#
+# start with sceptre --var-file=/home/jan/sceptre-jan-tech-test-app/dev-variables.yaml <COMMAND>
+#
+#For part of tyhe Name Tag:
+EnvironmentName: "TechTestDev"
+#DB information that preferably is in a well hiddeen file with limited access
+DBName: "techtest"
+DBMasterUsername: "postgres"
+DBMasterUserPassword: "jpassword"
+#Issue with DBPort as it comes in as int instead of string so hard coded instead
+#DBPort: "5432"
+#
+#To be able to login for testing. Likely to be different in every environment
+EC2keypair: "me-sydney-keypair"

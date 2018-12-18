@@ -1,0 +1,33 @@
+template_path: infrastructure/t_ec2-instance-dbinit.yaml
+dependencies:
+  - dev/vpc.yaml
+  - dev/security-groups.yaml
+  - dev/load-balancers.yaml
+  - dev/postgresdb.yaml
+
+parameters: 
+   VPC: !stack_output vpc.yaml::VPC
+   EnvironmentName: {{ var.EnvironmentName }}
+   #EnvironmentName: !stack_output vpc.yaml::EnvironmentName
+   InstanceType: t2.micro
+   EnvType: "test"
+   #
+   EC2keypair: {{ var.EC2keypair }}
+   #
+   #DEV
+   SecurityGroup: !stack_output security-groups.yaml::TestingSecurityGroup
+   EC2SubnetId: !stack_output vpc.yaml::PublicSubnet1
+   #PROD
+   #SecurityGroup: !stack_output security-groups.yaml::ECSHostSecurityGroup
+   #EC2SubnetId: !stack_output vpc.yaml::PrivateSubnet1
+
+   DBHost: !stack_output postgresdb.yaml::VTTDBHOST
+   ListenHost: !stack_output postgresdb.yaml::VTTLISTENHOST
+   ListenPort: !stack_output postgresdb.yaml::VTTLISTENPORT    
+   DBName: {{ var.DBName }}
+   DBMasterUsername: {{ var.DBMasterUsername }}
+   DBMasterUserPassword: {{ var.DBMasterUserPassword }}
+   DBPort: "5432"            
+  
+
+

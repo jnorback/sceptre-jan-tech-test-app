@@ -3,5 +3,5 @@ dependencies:
   - dev/vpc.yaml
 parameters: 
    VPC: !stack_output vpc.yaml::VPC
-   EnvironmentName: !stack_output vpc.yaml::EnvironmentName
+   EnvironmentName: {{ var.EnvironmentName }}
 

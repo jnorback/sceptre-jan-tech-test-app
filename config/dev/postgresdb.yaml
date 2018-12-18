@@ -4,7 +4,7 @@ dependencies:
   - dev/security-groups.yaml
   - dev/load-balancers.yaml
 parameters: 
-   EnvironmentName: !stack_output vpc.yaml::EnvironmentName
+   EnvironmentName: {{ var.EnvironmentName }}
    #
    #For DEV setup put the DB in the Public subnet and the special public security group
    DatabaseSecurityGroup: !stack_output security-groups.yaml::TestingSecurityGroup
@@ -16,9 +16,10 @@ parameters:
    #
    DBInstanceClass: db.t2.micro
    #
-   #Note that some of the below should move into variables for security later
-   DBName: "techtest"
-   DBMasterUsername: "postgres"
-   DBMasterUserPassword: "jpassword"
+   #
+   DBName: {{ var.DBName }}
+   DBMasterUsername: {{ var.DBMasterUsername }}
+   DBMasterUserPassword: {{ var.DBMasterUserPassword }}
    DBPort: "5432"
+
  
