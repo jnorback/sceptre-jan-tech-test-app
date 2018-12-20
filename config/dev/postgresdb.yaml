@@ -17,9 +17,11 @@ parameters:
    DBInstanceClass: db.t2.micro
    #
    #
+   DBPort: "5432"
    DBName: {{ var.DBName }}
    DBMasterUsername: {{ var.DBMasterUsername }}
    DBMasterUserPassword: {{ var.DBMasterUserPassword }}
-   DBPort: "5432"
+
+   
 
  

@@ -2,10 +2,4 @@ project_code: sceptre-jan-tech-test-app
 region: ap-southeast-2
 template_bucket_name: jnorback-open1
 template_key_prefix: sceptre/sceptre-jan-tech-test-app
-#parameters:
-#  DBNameParam: "techtest"
-#  DBMasterUsernameParam: "postgres"
-#  DBMasterUserPasswordParam: "jpassword"
-#  DBPortParam: "5432"
-#  EnvTypeParam: "test"
-#  EC2keypairParam: "me-sydney-keypair"
+

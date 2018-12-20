@@ -1,9 +1,10 @@
-template_path: infrastructure/t_ec2-instance-dbinit.yaml
+template_path: infrastructure/t_ecs-cluster.yaml
 dependencies:
   - dev/vpc.yaml
   - dev/security-groups.yaml
   - dev/load-balancers.yaml
   - dev/postgresdb.yaml
+  - dev/ec2-instance-dbinit.yaml
 
 parameters: 
    VPC: !stack_output vpc.yaml::VPC
@@ -16,10 +17,10 @@ parameters:
    #
    #DEV
    SecurityGroup: !stack_output security-groups.yaml::TestingSecurityGroup
-   EC2SubnetId: !stack_output vpc.yaml::PublicSubnet1
+   Subnets: !stack_output vpc.yaml::PublicSubnets
    #PROD
    #SecurityGroup: !stack_output security-groups.yaml::ECSHostSecurityGroup
-   #EC2SubnetId: !stack_output vpc.yaml::PrivateSubnet1
+   #Subnets: !stack_output vpc.yaml::PrivateSubnets 
    #
    DBPort: !stack_output postgresdb.yaml::DBPort
    DBHost: !stack_output postgresdb.yaml::VTTDBHOST
@@ -28,8 +29,4 @@ parameters:
    DBName: {{ var.DBName }}
    DBMasterUsername: {{ var.DBMasterUsername }}
    DBMasterUserPassword: {{ var.DBMasterUserPassword }}
-   
-
-  
-
-
+   ClusterSize: "4"

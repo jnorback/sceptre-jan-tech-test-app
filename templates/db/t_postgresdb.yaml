@@ -97,3 +97,7 @@ Outputs:
       Description: "port to bind on the local server"
       Value: 3000
 
+    DBPort:
+      Description: "RDS Database Port"
+      Value: !Ref DBPort
+

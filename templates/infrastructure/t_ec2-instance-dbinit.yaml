@@ -1,16 +1,15 @@
 Description: >
     This template deploys an EC2 instance purely for initializing the DB in provided VPC and subnets
+
     
 Parameters:
 
     EC2keypair:
         Description: Provides the name of the EC2 key pair
         Type: String
-        Default: NothingAtAll
 
     EnvType: 
         Description: Environment type.
-        Default: test
         Type: String
     
     EnvironmentName:
@@ -20,7 +19,6 @@ Parameters:
     InstanceType:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
-        Default: t2.micro
 
     VPC:
         Description: Choose which VPC this ECS cluster should be deployed to
@@ -38,13 +36,11 @@ Parameters:
     DBMasterUsername:
         Description: Allows one to set the DB master user name for the DB elsewhere
         Type: String
-        Default: MyName
-
+     
     DBMasterUserPassword:
         Description: Allows one to set the DB master user name password for the DB elsewhere
         Type: String
-        Default: MyPassword
-
+    
     DBName:
         Description: name of the database to use on the database server
         Type: String
@@ -53,22 +49,18 @@ Parameters:
     DBPort:
         Description: port to connect to the database server on
         Type: String
-        Default: 5432
-
+        
     DBHost:
         Description: host to connect to, ip or dns entry
         Type: String
-        Default: localhost
-
+       
     ListenHost:
         Description: listener configuration for the application, 0.0.0.0 for all IP, or specify ip to listen on
         Type: String
-        Default: localhost
-
+       
     ListenPort:
         Description: port to bind on the local server
-        Type: String
-        Default: 3000
+        Type: String 
 
     #End DB settings
 
@@ -163,9 +155,6 @@ Resources:
                           yum:
                               awslogs: []
                                
-                      locale: 
-                              en_US.utf8
-
                       commands:
                           10_add_vibrato_user:
                               command: /usr/sbin/useradd vibrato

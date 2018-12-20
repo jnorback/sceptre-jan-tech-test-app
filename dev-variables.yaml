@@ -8,8 +8,6 @@ EnvironmentName: "TechTestDev"
 DBName: "techtest"
 DBMasterUsername: "postgres"
 DBMasterUserPassword: "jpassword"
-#Issue with DBPort as it comes in as int instead of string so hard coded instead
-#DBPort: "5432"
-#
-#To be able to login for testing. Likely to be different in every environment
 EC2keypair: "me-sydney-keypair"
+EnvType: "test"
+
