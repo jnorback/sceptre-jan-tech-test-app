@@ -29,4 +29,6 @@ parameters:
    DBName: {{ var.DBName }}
    DBMasterUsername: {{ var.DBMasterUsername }}
    DBMasterUserPassword: {{ var.DBMasterUserPassword }}
-   ClusterSize: "4"
+   InitialClusterSize: "2"
+   MinClusterSize: "2"
+   MaxClusterSize: "4"

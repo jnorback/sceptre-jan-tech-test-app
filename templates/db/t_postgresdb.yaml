@@ -41,6 +41,10 @@ Parameters:
         Type: String
         Default: 5432
 
+    EngineVersion:
+        Description: The version number of the database engine that the DB instance uses
+        Type: String
+
 Resources:
     MyDB:
       Type: AWS::RDS::DBInstance
@@ -50,6 +54,7 @@ Resources:
         DBInstanceClass: db.t2.micro
         DBSubnetGroupName: !Ref MyDBSubnetGroup
         Engine: Postgres
+        EngineVersion: !Ref EngineVersion
         #Iops: '1000'
         MasterUsername: !Ref DBMasterUsername
         MasterUserPassword: !Ref DBMasterUserPassword

@@ -68,11 +68,19 @@ Parameters:
         Default: 3000
 
     #End DB settings
-    ClusterSize:
-        Description: How many ECS hosts do you want to initially deploy?
+
+    InitialClusterSize:
+        Description: How many ECS hosts do you want to  initially deploy?
+        Type: String
+
+    MinClusterSize:
+        Description: How many ECS hosts do you want to minimum deploy?
         Type: String
        
-
+    MaxClusterSize:
+        Description: How many ECS hosts do you want to maximum deploy?
+        Type: String
+       
 
 Mappings:
 
@@ -131,9 +139,9 @@ Resources:
         Properties:
             VPCZoneIdentifier: !Ref Subnets
             LaunchConfigurationName: !Ref ECSLaunchConfiguration
-            MinSize: !Ref ClusterSize
-            MaxSize: !Ref ClusterSize
-            DesiredCapacity: !Ref ClusterSize
+            MinSize: !Ref MinClusterSize
+            MaxSize: !Ref MaxClusterSize
+            DesiredCapacity: !Ref InitialClusterSize
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName} ECS host
